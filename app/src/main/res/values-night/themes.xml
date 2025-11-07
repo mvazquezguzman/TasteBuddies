@@ -1,0 +1,16 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.TasteBuddies" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/tea_green</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/tea_green</item>
+        <item name="colorOnPrimaryContainer">@color/drab_dark_brown</item>
+        <item name="colorSecondary">@color/vanilla</item>
+        <item name="colorOnSecondary">@color/drab_dark_brown</item>
+        <item name="colorTertiary">@color/celtic_blue</item>
+        <item name="colorOnTertiary">@color/white</item>
+        <item name="colorSurface">@color/drab_dark_brown</item>
+        <item name="colorOnSurface">@color/ivory</item>
+    </style>
+</resources>

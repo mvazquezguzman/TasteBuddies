@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Font styles from brand guide - using Material TextAppearance as parent -->
+    <style name="TextAppearance.Poppins" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/poppins</item>
+    </style>
+    
+    <style name="TextAppearance.Comfortaa" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/comfortaa</item>
+    </style>
+    
+    <!-- Text styles with different weights -->
+    <style name="TextAppearance.Poppins.Regular" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+    
+    <style name="TextAppearance.Poppins.SemiBold" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+    
+    <style name="TextAppearance.Poppins.Bold" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    
+    <style name="TextAppearance.Comfortaa.Regular" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/comfortaa</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+    
+    <style name="TextAppearance.Comfortaa.SemiBold" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/comfortaa</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+    
+    <style name="TextAppearance.Comfortaa.Bold" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:fontFamily">@font/comfortaa</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>
+

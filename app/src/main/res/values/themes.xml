@@ -1,0 +1,19 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.TasteBuddies" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/tea_green</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/vanilla</item>
+        <item name="colorOnSecondary">@color/celtic_blue</item>
+        <item name="colorOnTertiary">@color/white</item>
+        <item name="colorSurface">@color/ivory</item>
+        <item name="colorOnSurface">@color/drab_dark_brown</item>
+        
+        <!-- Font families from brand guide -->
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="fontFamily">@font/poppins</item>
+    </style>
+
+    <style name="Theme.TasteBuddies" parent="Base.Theme.TasteBuddies" />
+</resources>
