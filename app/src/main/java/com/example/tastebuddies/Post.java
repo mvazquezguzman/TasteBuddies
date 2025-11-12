@@ -17,6 +17,7 @@ public class Post {
     private int likeCount;
     private int commentCount;
     private boolean isLiked;
+    private boolean isBookmarked;
 
     public Post(int postId, int userId, String username, byte[] profilePicture, 
                 String foodName, String review, int rating, byte[] postImage,
@@ -163,5 +164,13 @@ public class Post {
 
     public void setLiked(boolean liked) {
         isLiked = liked;
+    }
+
+    public boolean isBookmarked() {
+        return isBookmarked;
+    }
+
+    public void setBookmarked(boolean bookmarked) {
+        isBookmarked = bookmarked;
     }
 }
