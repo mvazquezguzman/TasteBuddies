@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -9,7 +8,7 @@
     android:elevation="2dp"
     android:padding="16dp">
 
-    <!-- Restaurant Header -->
+    <!-- Place Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -23,13 +22,13 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textViewRestaurantName"
+                android:id="@+id/textViewPlaceName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_dark"
-                android:text="Restaurant Name" />
+                android:text="Place Name" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -70,13 +69,13 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/textViewRestaurantType"
+                android:id="@+id/textViewPlaceType"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:textSize="14sp"
                 android:textColor="@color/text_gray"
-                android:text="Breakfast restaurant" />
+                android:text="Restaurant type" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -105,66 +104,24 @@
         </LinearLayout>
 
         <ImageButton
-            android:id="@+id/buttonSave"
+            android:id="@+id/buttonUnsave"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="8dp"
             android:src="@drawable/ic_bookmark"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Save place"
-            android:tint="@color/text_dark" />
-
-        <ImageButton
-            android:id="@+id/buttonMenu"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@android:drawable/ic_menu_more"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="More options"
+            android:contentDescription="Remove from Want to Try"
             android:tint="@color/text_dark" />
     </LinearLayout>
 
-    <!-- Restaurant Image -->
+    <!-- Place Image -->
     <ImageView
-        android:id="@+id/imageView1"
+        android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:layout_marginTop="12dp"
         android:scaleType="centerCrop"
         android:background="@android:color/darker_gray"
-        android:contentDescription="Restaurant image" />
-
-    <!-- Service Options -->
-    <TextView
-        android:id="@+id/textViewServiceOptions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:textSize="14sp"
-        android:textColor="@color/text_gray"
-        android:text="Dine-in · Takeout · Delivery" />
-
-    <!-- Hours -->
-    <TextView
-        android:id="@+id/textViewHours"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textSize="13sp"
-        android:textColor="@color/text_gray"
-        android:text="Hours: Mon-Sun 8:00 AM - 10:00 PM"
-        android:maxLines="3"
-        android:ellipsize="end" />
-
-    <!-- Phone Number -->
-    <TextView
-        android:id="@+id/textViewPhone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textSize="14sp"
-        android:textColor="@color/text_gray"
-        android:text="Phone: (770) 963-1234" />
+        android:contentDescription="Place image" />
 
     <!-- Action Buttons -->
     <LinearLayout

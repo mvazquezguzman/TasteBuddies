@@ -28,6 +28,7 @@ import java.util.List;
 
 public class FragmentSaved extends Fragment implements OnMapReadyCallback {
     private ListView listViewSaved;
+    private SavedPlaceAdapter savedPlaceAdapter;
     private PostAdapter adapter;
     private int currentUserId;
     private TextView textViewEmpty;
@@ -41,6 +42,8 @@ public class FragmentSaved extends Fragment implements OnMapReadyCallback {
     private MapView mapView;
     private GoogleMap googleMap;
     private List<Post> savedPosts;
+    private List<SavedPlace> savedPlaces;
+    private TasteBuddiesDatabaseManager dbManager;
     private boolean isListView = true;
 
     @Override
@@ -51,6 +54,8 @@ public class FragmentSaved extends Fragment implements OnMapReadyCallback {
         if (mainActivity != null) {
             currentUserId = mainActivity.getCurrentUserId();
         }
+        
+        dbManager = TasteBuddiesDatabaseManager.getInstance(requireContext());
 
         // Apply Window Insets to Handle Status Bar and Camera Cutout
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
@@ -109,34 +114,40 @@ public class FragmentSaved extends Fragment implements OnMapReadyCallback {
         });
 
         listViewSaved.setOnItemClickListener((parent, view1, position, id) -> {
-            if (adapter != null && adapter.getCount() > position) {
-                Post post = (Post) adapter.getItem(position);
-                if (post != null) {
-                    Intent intent = new Intent(getActivity(), PostDetailActivity.class);
-                    intent.putExtra("postId", post.getPostId());
-                    startActivity(intent);
-                }
-            }
+            // Saved places don't navigate to post detail, they're just displayed
+            // The action buttons (Directions, Call, Website) handle interactions
         });
 
         return view;
     }
 
     private void loadCounts() {
-        textViewWantToTryCount.setText("0");
+        int count = dbManager.getSavedPlacesCount(currentUserId);
+        textViewWantToTryCount.setText(String.valueOf(count));
     }
 
     private void loadSavedPosts() {
         savedPosts = new ArrayList<>();
+        savedPlaces = dbManager.getSavedPlaces(currentUserId);
         
         // Update visibility based on current view mode
         if (isListView) {
-            if (savedPosts.isEmpty()) {
+            if (savedPlaces.isEmpty()) {
                 textViewEmpty.setVisibility(View.VISIBLE);
                 listViewSaved.setVisibility(View.GONE);
             } else {
                 textViewEmpty.setVisibility(View.GONE);
                 listViewSaved.setVisibility(View.VISIBLE);
+                savedPlaceAdapter = new SavedPlaceAdapter(requireContext(), savedPlaces);
+                savedPlaceAdapter.setOnPlaceRemovedListener(() -> {
+                    loadCounts();
+                    loadSavedPosts();
+                    // Update map if in map view
+                    if (!isListView && googleMap != null) {
+                        updateMapMarkers();
+                    }
+                });
+                listViewSaved.setAdapter(savedPlaceAdapter);
             }
         } else {
             updateMapMarkers();
@@ -158,7 +169,7 @@ public class FragmentSaved extends Fragment implements OnMapReadyCallback {
         layoutWantToTry.setVisibility(View.VISIBLE);
         
         // Update empty state visibility
-        if (savedPosts == null || savedPosts.isEmpty()) {
+        if (savedPlaces == null || savedPlaces.isEmpty()) {
             textViewEmpty.setVisibility(View.VISIBLE);
             listViewSaved.setVisibility(View.GONE);
         } else {
@@ -192,33 +203,29 @@ public class FragmentSaved extends Fragment implements OnMapReadyCallback {
     }
     
     private void updateMapMarkers() {
-        if (googleMap == null || savedPosts == null) {
+        if (googleMap == null) {
             return;
         }
         
         googleMap.clear();
         
-        if (savedPosts.isEmpty()) {
+        if (savedPlaces == null || savedPlaces.isEmpty()) {
             return;
         }
         
-        // Add markers for all saved posts
+        // Add markers for all saved places
         LatLng firstLocation = null;
-        for (Post post : savedPosts) {
-            if (post.getLatitude() != 0 && post.getLongitude() != 0) {
-                LatLng location = new LatLng(post.getLatitude(), post.getLongitude());
+        for (SavedPlace place : savedPlaces) {
+            if (place.getLatitude() != 0 && place.getLongitude() != 0) {
+                LatLng location = new LatLng(place.getLatitude(), place.getLongitude());
                 if (firstLocation == null) {
                     firstLocation = location;
                 }
                 
-                String title = post.getRestaurantName() != null && !post.getRestaurantName().isEmpty() 
-                    ? post.getRestaurantName() 
-                    : post.getFoodName();
-                
                 googleMap.addMarker(new MarkerOptions()
                     .position(location)
-                    .title(title)
-                    .snippet(post.getLocation()));
+                    .title(place.getPlaceName())
+                    .snippet(place.getPlaceType()));
             }
         }
         
@@ -226,8 +233,8 @@ public class FragmentSaved extends Fragment implements OnMapReadyCallback {
         if (firstLocation != null) {
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
         } else {
-            // Default to a central location if no posts have coordinates
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(37.7749, -122.4194), 10f));
+            // Default to Georgia Gwinnett College location if no places have coordinates
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(33.9425, -84.0686), 12f));
         }
     }
     

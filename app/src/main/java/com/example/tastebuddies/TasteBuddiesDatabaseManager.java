@@ -14,13 +14,14 @@ import java.util.List;
 
 public class TasteBuddiesDatabaseManager {
     private static final String DATABASE_NAME = "tastebuddies.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
 
     public static final String TABLE_USERS = "users";
     public static final String TABLE_POSTS = "posts";
     public static final String TABLE_COMMENTS = "comments";
     public static final String TABLE_LIKES = "likes";
     public static final String TABLE_BOOKMARKS = "bookmarks";
+    public static final String TABLE_SAVED_PLACES = "saved_places";
 
     public static final String DEMO_EMAIL = "demo@tastebuddies.com";
     public static final String DEMO_PASSWORD = "demo123";
@@ -129,10 +130,32 @@ public class TasteBuddiesDatabaseManager {
                 "FOREIGN KEY(user_id) REFERENCES " + TABLE_USERS + "(user_id) ON DELETE CASCADE" +
                 ")");
 
+        database.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_SAVED_PLACES + " (" +
+                "saved_place_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "user_id INTEGER NOT NULL," +
+                "place_name TEXT NOT NULL," +
+                "place_type TEXT," +
+                "rating REAL," +
+                "review_count INTEGER," +
+                "distance TEXT," +
+                "status TEXT," +
+                "service_options TEXT," +
+                "phone TEXT," +
+                "website TEXT," +
+                "hours TEXT," +
+                "latitude REAL," +
+                "longitude REAL," +
+                "image_url TEXT," +
+                "created_at INTEGER DEFAULT (strftime('%s','now') * 1000)," +
+                "FOREIGN KEY(user_id) REFERENCES " + TABLE_USERS + "(user_id) ON DELETE CASCADE" +
+                ")");
+
         database.execSQL("CREATE INDEX IF NOT EXISTS idx_posts_user ON " +
                 TABLE_POSTS + "(user_id, created_at DESC)");
         database.execSQL("CREATE INDEX IF NOT EXISTS idx_comments_post ON " +
                 TABLE_COMMENTS + "(post_id, created_at DESC)");
+        database.execSQL("CREATE INDEX IF NOT EXISTS idx_saved_places_user ON " +
+                TABLE_SAVED_PLACES + "(user_id, created_at DESC)");
     }
 
     private void seedDemoData() {
@@ -716,6 +739,121 @@ public class TasteBuddiesDatabaseManager {
         String commentText = cursor.getString(cursor.getColumnIndexOrThrow("comment_text"));
         long createdAt = cursor.getLong(cursor.getColumnIndexOrThrow("created_at"));
         return new Comment(commentId, postId, userId, username, profilePicture, commentText, createdAt);
+    }
+
+    // Saved Places methods
+    public long savePlace(int userId, RestaurantInfo restaurant) {
+        SQLiteStatement statement = database.compileStatement(
+                "INSERT INTO " + TABLE_SAVED_PLACES + " (" +
+                        "user_id, place_name, place_type, rating, review_count, distance, " +
+                        "status, service_options, phone, website, hours, latitude, longitude, image_url, created_at" +
+                        ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        );
+        statement.bindLong(1, userId);
+        statement.bindString(2, restaurant.getName());
+        statement.bindString(3, restaurant.getType());
+        statement.bindDouble(4, restaurant.getRating());
+        statement.bindLong(5, restaurant.getReviewCount());
+        statement.bindString(6, restaurant.getDistance());
+        statement.bindString(7, restaurant.getStatus());
+        statement.bindString(8, restaurant.getServiceOptions());
+        if (restaurant.getPhone() != null) {
+            statement.bindString(9, restaurant.getPhone());
+        } else {
+            statement.bindNull(9);
+        }
+        if (restaurant.getWebsite() != null) {
+            statement.bindString(10, restaurant.getWebsite());
+        } else {
+            statement.bindNull(10);
+        }
+        if (restaurant.getHours() != null) {
+            statement.bindString(11, restaurant.getHours());
+        } else {
+            statement.bindNull(11);
+        }
+        statement.bindDouble(12, restaurant.getLatitude());
+        statement.bindDouble(13, restaurant.getLongitude());
+        if (restaurant.getImageUrl1() != null) {
+            statement.bindString(14, restaurant.getImageUrl1());
+        } else {
+            statement.bindNull(14);
+        }
+        statement.bindLong(15, System.currentTimeMillis());
+
+        long id = statement.executeInsert();
+        statement.close();
+        return id;
+    }
+
+    public boolean isPlaceSaved(int userId, String placeName, double latitude, double longitude) {
+        Cursor cursor = database.rawQuery(
+                "SELECT COUNT(*) FROM " + TABLE_SAVED_PLACES +
+                        " WHERE user_id = ? AND place_name = ? AND latitude = ? AND longitude = ?",
+                new String[]{String.valueOf(userId), placeName, String.valueOf(latitude), String.valueOf(longitude)}
+        );
+        boolean exists = false;
+        if (cursor.moveToFirst()) {
+            exists = cursor.getInt(0) > 0;
+        }
+        cursor.close();
+        return exists;
+    }
+
+    public List<SavedPlace> getSavedPlaces(int userId) {
+        List<SavedPlace> savedPlaces = new ArrayList<>();
+        Cursor cursor = database.rawQuery(
+                "SELECT * FROM " + TABLE_SAVED_PLACES +
+                        " WHERE user_id = ? ORDER BY created_at DESC",
+                new String[]{String.valueOf(userId)}
+        );
+
+        while (cursor.moveToNext()) {
+            savedPlaces.add(mapSavedPlace(cursor));
+        }
+        cursor.close();
+        return savedPlaces;
+    }
+
+    public int getSavedPlacesCount(int userId) {
+        Cursor cursor = database.rawQuery(
+                "SELECT COUNT(*) FROM " + TABLE_SAVED_PLACES + " WHERE user_id = ?",
+                new String[]{String.valueOf(userId)}
+        );
+        int count = 0;
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        return count;
+    }
+
+    public void deleteSavedPlace(int userId, String placeName, double latitude, double longitude) {
+        database.delete(TABLE_SAVED_PLACES,
+                "user_id = ? AND place_name = ? AND latitude = ? AND longitude = ?",
+                new String[]{String.valueOf(userId), placeName, String.valueOf(latitude), String.valueOf(longitude)});
+    }
+
+    private SavedPlace mapSavedPlace(Cursor cursor) {
+        int savedPlaceId = cursor.getInt(cursor.getColumnIndexOrThrow("saved_place_id"));
+        int userId = cursor.getInt(cursor.getColumnIndexOrThrow("user_id"));
+        String placeName = cursor.getString(cursor.getColumnIndexOrThrow("place_name"));
+        String placeType = cursor.getString(cursor.getColumnIndexOrThrow("place_type"));
+        float rating = cursor.getFloat(cursor.getColumnIndexOrThrow("rating"));
+        int reviewCount = cursor.getInt(cursor.getColumnIndexOrThrow("review_count"));
+        String distance = cursor.getString(cursor.getColumnIndexOrThrow("distance"));
+        String status = cursor.getString(cursor.getColumnIndexOrThrow("status"));
+        String serviceOptions = cursor.getString(cursor.getColumnIndexOrThrow("service_options"));
+        String phone = cursor.getString(cursor.getColumnIndex("phone"));
+        String website = cursor.getString(cursor.getColumnIndex("website"));
+        String hours = cursor.getString(cursor.getColumnIndex("hours"));
+        double latitude = cursor.getDouble(cursor.getColumnIndexOrThrow("latitude"));
+        double longitude = cursor.getDouble(cursor.getColumnIndexOrThrow("longitude"));
+        String imageUrl = cursor.getString(cursor.getColumnIndex("image_url"));
+        long createdAt = cursor.getLong(cursor.getColumnIndexOrThrow("created_at"));
+
+        return new SavedPlace(savedPlaceId, userId, placeName, placeType, rating, reviewCount,
+                distance, status, serviceOptions, phone, website, hours, latitude, longitude, imageUrl, createdAt);
     }
 }
 
