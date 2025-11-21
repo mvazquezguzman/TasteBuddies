@@ -90,13 +90,6 @@ public class FragmentProfile extends Fragment {
         // Configure RecyclerView with GridLayoutManager (3 columns)
         if (recyclerViewPosts != null) {
             recyclerViewPosts.setLayoutManager(new GridLayoutManager(getContext(), 3));
-            List<Post> posts = new ArrayList<>(); // TODO: Load actual posts
-            PostGridAdapter postsAdapter = new PostGridAdapter(posts, postId -> {
-                Intent intent = new Intent(getActivity(), PostDetailActivity.class);
-                intent.putExtra("postId", postId);
-                startActivity(intent);
-            });
-            recyclerViewPosts.setAdapter(postsAdapter);
         }
         
         if (imageButtonEdit != null) {
@@ -107,43 +100,142 @@ public class FragmentProfile extends Fragment {
             imageButtonMenu.setOnClickListener(v -> showMenuDialog());
         }
 
-        loadUserProfile();
-
         return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // Load profile after view is fully created
+        loadUserProfile();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        loadUserProfile();
+        // Refresh profile when fragment resumes
+        if (imageViewProfile != null) {
+            loadUserProfile();
+        }
     }
 
     private void loadUserProfile() {
-        if (imageViewProfile != null) {
-            imageViewProfile.setImageResource(android.R.drawable.sym_def_app_icon);
+        if (currentUserId == -1 || getActivity() == null) {
+            return;
+        }
+
+        try {
+            TasteBuddiesDatabaseManager dbManager = TasteBuddiesDatabaseManager.getInstance(getActivity());
+            User user = dbManager.getUserById(currentUserId);
+        
+        if (user != null) {
+            // Load user profile picture
+            if (imageViewProfile != null) {
+                if (user.getProfilePicture() != null && user.getProfilePicture().length > 0) {
+                    Bitmap profileBitmap = android.graphics.BitmapFactory.decodeByteArray(
+                            user.getProfilePicture(), 0, user.getProfilePicture().length);
+                    imageViewProfile.setImageBitmap(profileBitmap);
+                } else {
+                    imageViewProfile.setImageResource(android.R.drawable.sym_def_app_icon);
+                }
+            }
+            
+            // Load user display name
+            if (textViewDisplayName != null) {
+                String displayName = user.getDisplayName();
+                if (displayName != null && !displayName.isEmpty()) {
+                    textViewDisplayName.setText(displayName);
+                } else {
+                    textViewDisplayName.setText(user.getUsername());
+                }
+            }
+            
+            // Load user full name (using username as fallback)
+            if (textViewFullName != null) {
+                String displayName = user.getDisplayName();
+                if (displayName != null && !displayName.isEmpty()) {
+                    textViewFullName.setText(displayName);
+                } else {
+                    textViewFullName.setText(user.getUsername());
+                }
+            }
+            
+            // Load user bio
+            if (textViewBio != null) {
+                String bio = user.getBio();
+                if (bio != null && !bio.isEmpty()) {
+                    textViewBio.setText(bio);
+                    textViewBio.setVisibility(View.VISIBLE);
+                } else {
+                    textViewBio.setVisibility(View.GONE);
+                }
+            }
+            
+            // Load post count
+            if (textViewPosts != null) {
+                int postCount = dbManager.getPostCountByUser(currentUserId);
+                textViewPosts.setText(String.valueOf(postCount));
+            }
+            
+            // Load followers and following (placeholder for now)
+            if (textViewFollowers != null) {
+                textViewFollowers.setText("0");
+            }
+            if (textViewFollowing != null) {
+                textViewFollowing.setText("0");
+            }
+        } else {
+            // Fallback to default values if user not found
+            if (imageViewProfile != null) {
+                imageViewProfile.setImageResource(android.R.drawable.sym_def_app_icon);
+            }
+            if (textViewDisplayName != null) {
+                textViewDisplayName.setText("User");
+            }
+            if (textViewFullName != null) {
+                textViewFullName.setText("User");
+            }
+            if (textViewBio != null) {
+                textViewBio.setVisibility(View.GONE);
+            }
+            if (textViewPosts != null) {
+                textViewPosts.setText("0");
+            }
+            if (textViewFollowers != null) {
+                textViewFollowers.setText("0");
+            }
+            if (textViewFollowing != null) {
+                textViewFollowing.setText("0");
+            }
         }
         
-        if (textViewDisplayName != null) {
-            textViewDisplayName.setText("MyUser Name");
+        // Load user's posts
+        if (recyclerViewPosts != null && getActivity() != null) {
+            List<Post> posts = dbManager.getPostsByUser(currentUserId, currentUserId);
+            PostGridAdapter postsAdapter = new PostGridAdapter(posts, postId -> {
+                if (getActivity() != null) {
+                    Intent intent = new Intent(getActivity(), PostDetailActivity.class);
+                    intent.putExtra("postId", postId);
+                    startActivity(intent);
+                }
+            });
+            recyclerViewPosts.setAdapter(postsAdapter);
         }
-        
-        if (textViewFullName != null) {
-            textViewFullName.setText("MyUser Full Name");
-        }
-        
-        if (textViewBio != null) {
-            textViewBio.setText("So you two dig up, dig up dinosaurs? God creates dinosaurs. God destroys dinosaurs. God creates Man. Man destroys God. Man creates Dinosaurs.");
-            textViewBio.setVisibility(View.VISIBLE);
-        }
-        
-        if (textViewPosts != null) {
-            textViewPosts.setText("300");
-        }
-        if (textViewFollowers != null) {
-            textViewFollowers.setText("100");
-        }
-        if (textViewFollowing != null) {
-            textViewFollowing.setText("103");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Set default values on error
+            if (imageViewProfile != null) {
+                imageViewProfile.setImageResource(android.R.drawable.sym_def_app_icon);
+            }
+            if (textViewDisplayName != null) {
+                textViewDisplayName.setText("User");
+            }
+            if (textViewFullName != null) {
+                textViewFullName.setText("User");
+            }
+            if (textViewPosts != null) {
+                textViewPosts.setText("0");
+            }
         }
     }
     

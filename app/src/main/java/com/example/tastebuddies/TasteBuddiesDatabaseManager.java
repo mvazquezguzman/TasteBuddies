@@ -378,9 +378,10 @@ public class TasteBuddiesDatabaseManager {
         String limitClause = limit > 0 ? " LIMIT " + limit : "";
         Cursor cursor = null;
         try {
+            // First, get post metadata without BLOBs to avoid CursorWindow size issues
             cursor = database.rawQuery(
-                    "SELECT p.post_id, p.user_id, u.username, u.profile_picture, " +
-                            "p.food_name, p.review, p.rating, p.post_image, p.restaurant_name, " +
+                    "SELECT p.post_id, p.user_id, u.username, " +
+                            "p.food_name, p.review, p.rating, p.restaurant_name, " +
                             "p.location, p.latitude, p.longitude, p.created_at, " +
                             "(SELECT COUNT(*) FROM " + TABLE_COMMENTS + " c WHERE c.post_id = p.post_id) AS comment_count, " +
                             "(SELECT COUNT(*) FROM " + TABLE_LIKES + " l WHERE l.post_id = p.post_id) AS like_count, " +
@@ -390,8 +391,19 @@ public class TasteBuddiesDatabaseManager {
                             "JOIN " + TABLE_USERS + " u ON u.user_id = p.user_id " +
                             "ORDER BY p.created_at DESC" + limitClause,
                     new String[]{String.valueOf(viewerUserId), String.valueOf(viewerUserId)});
+            
+            // Fetch BLOBs separately for each post to avoid CursorWindow overflow
             while (cursor.moveToNext()) {
-                posts.add(mapPost(cursor));
+                try {
+                    Post post = mapPostWithoutBlobs(cursor);
+                    // Fetch BLOBs separately
+                    post.setPostImage(getPostImageBlob(post.getPostId()));
+                    post.setProfilePicture(getUserProfilePictureBlob(post.getUserId()));
+                    posts.add(post);
+                } catch (Exception e) {
+                    // Skip posts that cause errors (e.g., corrupted data)
+                    e.printStackTrace();
+                }
             }
         } finally {
             if (cursor != null) {
@@ -405,9 +417,10 @@ public class TasteBuddiesDatabaseManager {
         List<Post> posts = new ArrayList<>();
         Cursor cursor = null;
         try {
+            // Get post metadata without BLOBs to avoid CursorWindow size issues
             cursor = database.rawQuery(
-                    "SELECT p.post_id, p.user_id, u.username, u.profile_picture, " +
-                            "p.food_name, p.review, p.rating, p.post_image, p.restaurant_name, " +
+                    "SELECT p.post_id, p.user_id, u.username, " +
+                            "p.food_name, p.review, p.rating, p.restaurant_name, " +
                             "p.location, p.latitude, p.longitude, p.created_at, " +
                             "(SELECT COUNT(*) FROM " + TABLE_COMMENTS + " c WHERE c.post_id = p.post_id) AS comment_count, " +
                             "(SELECT COUNT(*) FROM " + TABLE_LIKES + " l WHERE l.post_id = p.post_id) AS like_count, " +
@@ -418,8 +431,19 @@ public class TasteBuddiesDatabaseManager {
                             "WHERE p.user_id = ? " +
                             "ORDER BY p.created_at DESC",
                     new String[]{String.valueOf(viewerUserId), String.valueOf(viewerUserId), String.valueOf(userId)});
+            
+            // Fetch BLOBs separately for each post to avoid CursorWindow overflow
             while (cursor.moveToNext()) {
-                posts.add(mapPost(cursor));
+                try {
+                    Post post = mapPostWithoutBlobs(cursor);
+                    // Fetch BLOBs separately
+                    post.setPostImage(getPostImageBlob(post.getPostId()));
+                    post.setProfilePicture(getUserProfilePictureBlob(post.getUserId()));
+                    posts.add(post);
+                } catch (Exception e) {
+                    // Skip posts that cause errors (e.g., corrupted data)
+                    e.printStackTrace();
+                }
             }
         } finally {
             if (cursor != null) {
@@ -433,9 +457,10 @@ public class TasteBuddiesDatabaseManager {
         List<Post> posts = new ArrayList<>();
         Cursor cursor = null;
         try {
+            // Get post metadata without BLOBs to avoid CursorWindow size issues
             cursor = database.rawQuery(
-                    "SELECT p.post_id, p.user_id, u.username, u.profile_picture, " +
-                            "p.food_name, p.review, p.rating, p.post_image, p.restaurant_name, " +
+                    "SELECT p.post_id, p.user_id, u.username, " +
+                            "p.food_name, p.review, p.rating, p.restaurant_name, " +
                             "p.location, p.latitude, p.longitude, p.created_at, " +
                             "(SELECT COUNT(*) FROM " + TABLE_COMMENTS + " c WHERE c.post_id = p.post_id) AS comment_count, " +
                             "(SELECT COUNT(*) FROM " + TABLE_LIKES + " l WHERE l.post_id = p.post_id) AS like_count, " +
@@ -447,8 +472,19 @@ public class TasteBuddiesDatabaseManager {
                             "WHERE b.user_id = ? " +
                             "ORDER BY p.created_at DESC",
                     new String[]{String.valueOf(userId), String.valueOf(userId)});
+            
+            // Fetch BLOBs separately for each post to avoid CursorWindow overflow
             while (cursor.moveToNext()) {
-                posts.add(mapPost(cursor));
+                try {
+                    Post post = mapPostWithoutBlobs(cursor);
+                    // Fetch BLOBs separately
+                    post.setPostImage(getPostImageBlob(post.getPostId()));
+                    post.setProfilePicture(getUserProfilePictureBlob(post.getUserId()));
+                    posts.add(post);
+                } catch (Exception e) {
+                    // Skip posts that cause errors (e.g., corrupted data)
+                    e.printStackTrace();
+                }
             }
         } finally {
             if (cursor != null) {
@@ -480,9 +516,10 @@ public class TasteBuddiesDatabaseManager {
         Post post = null;
         Cursor cursor = null;
         try {
+            // Get post metadata without BLOBs to avoid CursorWindow size issues
             cursor = database.rawQuery(
-                    "SELECT p.post_id, p.user_id, u.username, u.profile_picture, " +
-                            "p.food_name, p.review, p.rating, p.post_image, p.restaurant_name, " +
+                    "SELECT p.post_id, p.user_id, u.username, " +
+                            "p.food_name, p.review, p.rating, p.restaurant_name, " +
                             "p.location, p.latitude, p.longitude, p.created_at, " +
                             "(SELECT COUNT(*) FROM " + TABLE_COMMENTS + " c WHERE c.post_id = p.post_id) AS comment_count, " +
                             "(SELECT COUNT(*) FROM " + TABLE_LIKES + " l WHERE l.post_id = p.post_id) AS like_count, " +
@@ -493,7 +530,10 @@ public class TasteBuddiesDatabaseManager {
                             "WHERE p.post_id = ? LIMIT 1",
                     new String[]{String.valueOf(viewerUserId), String.valueOf(viewerUserId), String.valueOf(postId)});
             if (cursor.moveToFirst()) {
-                post = mapPost(cursor);
+                post = mapPostWithoutBlobs(cursor);
+                // Fetch BLOBs separately
+                post.setPostImage(getPostImageBlob(post.getPostId()));
+                post.setProfilePicture(getUserProfilePictureBlob(post.getUserId()));
             }
         } finally {
             if (cursor != null) {
@@ -688,6 +728,62 @@ public class TasteBuddiesDatabaseManager {
         return stream.toByteArray();
     }
 
+    /**
+     * Delete a post from the database.
+     * Due to foreign key constraints with ON DELETE CASCADE, this will also automatically
+     * delete all related comments, likes, and bookmarks.
+     * 
+     * @param postId The ID of the post to delete
+     * @param userId The ID of the user attempting to delete (for verification)
+     * @return true if the post was deleted, false if the post doesn't exist or user doesn't own it
+     */
+    public boolean deletePost(int postId, int userId) {
+        // First verify the post exists and belongs to the user
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                    "SELECT user_id FROM " + TABLE_POSTS + " WHERE post_id = ? LIMIT 1",
+                    new String[]{String.valueOf(postId)});
+            if (!cursor.moveToFirst()) {
+                // Post doesn't exist
+                return false;
+            }
+            int postUserId = cursor.getInt(cursor.getColumnIndexOrThrow("user_id"));
+            if (postUserId != userId) {
+                // User doesn't own this post
+                return false;
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        // Delete the post (CASCADE will handle related data)
+        SQLiteStatement deleteStmt = database.compileStatement(
+                "DELETE FROM " + TABLE_POSTS + " WHERE post_id = ?");
+        deleteStmt.bindLong(1, postId);
+        int rowsDeleted = deleteStmt.executeUpdateDelete();
+        deleteStmt.close();
+
+        return rowsDeleted > 0;
+    }
+
+    /**
+     * Delete a post without user verification (use with caution, typically for admin operations)
+     * 
+     * @param postId The ID of the post to delete
+     * @return true if the post was deleted, false if the post doesn't exist
+     */
+    public boolean deletePost(int postId) {
+        SQLiteStatement deleteStmt = database.compileStatement(
+                "DELETE FROM " + TABLE_POSTS + " WHERE post_id = ?");
+        deleteStmt.bindLong(1, postId);
+        int rowsDeleted = deleteStmt.executeUpdateDelete();
+        deleteStmt.close();
+        return rowsDeleted > 0;
+    }
+
     private User mapUser(Cursor cursor) {
         int userId = cursor.getInt(cursor.getColumnIndexOrThrow("user_id"));
         String username = cursor.getString(cursor.getColumnIndexOrThrow("username"));
@@ -728,6 +824,80 @@ public class TasteBuddiesDatabaseManager {
             post.setBookmarked(cursor.getInt(isBookmarkedIndex) == 1);
         }
         return post;
+    }
+
+    private Post mapPostWithoutBlobs(Cursor cursor) {
+        int postId = cursor.getInt(cursor.getColumnIndexOrThrow("post_id"));
+        int userId = cursor.getInt(cursor.getColumnIndexOrThrow("user_id"));
+        String username = cursor.getString(cursor.getColumnIndexOrThrow("username"));
+        String foodName = cursor.getString(cursor.getColumnIndexOrThrow("food_name"));
+        String review = cursor.getString(cursor.getColumnIndexOrThrow("review"));
+        int rating = cursor.getInt(cursor.getColumnIndexOrThrow("rating"));
+        String restaurantName = cursor.getString(cursor.getColumnIndexOrThrow("restaurant_name"));
+        String location = cursor.getString(cursor.getColumnIndexOrThrow("location"));
+        int latitudeIndex = cursor.getColumnIndex("latitude");
+        int longitudeIndex = cursor.getColumnIndex("longitude");
+        double latitude = (latitudeIndex != -1 && !cursor.isNull(latitudeIndex)) ? cursor.getDouble(latitudeIndex) : 0;
+        double longitude = (longitudeIndex != -1 && !cursor.isNull(longitudeIndex)) ? cursor.getDouble(longitudeIndex) : 0;
+        long createdAt = cursor.getLong(cursor.getColumnIndexOrThrow("created_at"));
+        // Create post with null BLOBs - will be set separately
+        Post post = new Post(postId, userId, username, null, foodName, review,
+                rating, null, restaurantName, location, latitude, longitude, createdAt);
+        int commentCount = cursor.getInt(cursor.getColumnIndexOrThrow("comment_count"));
+        int likeCount = cursor.getInt(cursor.getColumnIndexOrThrow("like_count"));
+        int isLiked = cursor.getInt(cursor.getColumnIndexOrThrow("is_liked"));
+        post.setCommentCount(commentCount);
+        post.setLikeCount(likeCount);
+        post.setLiked(isLiked == 1);
+        int isBookmarkedIndex = cursor.getColumnIndex("is_bookmarked");
+        if (isBookmarkedIndex != -1) {
+            post.setBookmarked(cursor.getInt(isBookmarkedIndex) == 1);
+        }
+        return post;
+    }
+
+    private byte[] getPostImageBlob(int postId) {
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                    "SELECT post_image FROM " + TABLE_POSTS + " WHERE post_id = ? LIMIT 1",
+                    new String[]{String.valueOf(postId)});
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("post_image");
+                if (columnIndex != -1 && !cursor.isNull(columnIndex)) {
+                    return cursor.getBlob(columnIndex);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
+    private byte[] getUserProfilePictureBlob(int userId) {
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                    "SELECT profile_picture FROM " + TABLE_USERS + " WHERE user_id = ? LIMIT 1",
+                    new String[]{String.valueOf(userId)});
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("profile_picture");
+                if (columnIndex != -1 && !cursor.isNull(columnIndex)) {
+                    return cursor.getBlob(columnIndex);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
     }
 
     private Comment mapComment(Cursor cursor) {

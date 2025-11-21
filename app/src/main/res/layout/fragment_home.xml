@@ -11,18 +11,30 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
+        android:gravity="center_vertical"
         android:padding="16dp"
         android:background="@color/white"
         android:elevation="2dp">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/app_name"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="@color/text_dark" />
+            android:textColor="@color/text_dark"
+            android:gravity="center" />
+
+        <ImageButton
+            android:id="@+id/buttonRefresh"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_menu_rotate"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Refresh feed"
+            android:padding="12dp"
+            android:tint="@color/text_dark" />
 
     </LinearLayout>
 

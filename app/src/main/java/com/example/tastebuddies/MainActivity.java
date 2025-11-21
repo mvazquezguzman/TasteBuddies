@@ -64,14 +64,32 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void loadFragment(Fragment fragment) {
+    public void loadFragment(Fragment fragment) {
+        String tag = null;
+        if (fragment instanceof FragmentHome) {
+            tag = "home";
+        }
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragmentContainer, fragment)
+                .replace(R.id.fragmentContainer, fragment, tag)
                 .commit();
+    }
+    
+    public void loadFragmentNow(Fragment fragment) {
+        String tag = null;
+        if (fragment instanceof FragmentHome) {
+            tag = "home";
+        }
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragmentContainer, fragment, tag)
+                .commitNow();
     }
 
     public int getCurrentUserId() {
         return sharedPreferences.getInt("userId", -1);
+    }
+
+    public BottomNavigationView getBottomNavigationView() {
+        return bottomNavigationView;
     }
 
     public void loadSearchFragment() {
@@ -81,5 +99,15 @@ public class MainActivity extends AppCompatActivity {
     public void switchToSavedFragment() {
         loadFragment(new FragmentSaved());
         bottomNavigationView.setSelectedItemId(R.id.nav_saved);
+    }
+
+    public void refreshHomeFragment() {
+        // Always create a new home fragment to ensure fresh data is loaded
+        // This is more reliable than trying to refresh an existing fragment
+        FragmentHome homeFragment = new FragmentHome();
+        loadFragmentNow(homeFragment);
+        if (bottomNavigationView != null) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_home);
+        }
     }
 }

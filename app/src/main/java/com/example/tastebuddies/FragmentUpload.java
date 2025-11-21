@@ -56,7 +56,9 @@ public class FragmentUpload extends Fragment {
             return insets;
         });
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        if (getActivity() != null) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        }
 
         imageViewFood = view.findViewById(R.id.imageViewFood);
         editTextFoodName = view.findViewById(R.id.editTextFoodName);
@@ -78,33 +80,36 @@ public class FragmentUpload extends Fragment {
     }
 
     private void selectImageFromGallery() {
+        if (getActivity() == null) return;
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, REQUEST_IMAGE_PICK);
     }
 
     private void takePhoto() {
-        if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.CAMERA) 
+        if (getActivity() == null) return;
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) 
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(), 
+            ActivityCompat.requestPermissions(getActivity(), 
                     new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
             return;
         }
 
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(requireActivity().getPackageManager()) != null) {
+        if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
         }
     }
 
     private void getCurrentLocation() {
-        if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) 
+        if (getActivity() == null) return;
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) 
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(), 
+            ActivityCompat.requestPermissions(getActivity(), 
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
             return;
         }
 
-        fusedLocationClient.getLastLocation().addOnSuccessListener(requireActivity(), location -> {
+        fusedLocationClient.getLastLocation().addOnSuccessListener(getActivity(), location -> {
             if (location != null) {
                 latitude = location.getLatitude();
                 longitude = location.getLongitude();
@@ -125,11 +130,16 @@ public class FragmentUpload extends Fragment {
                 }
             } else if (requestCode == REQUEST_IMAGE_PICK && data != null) {
                 try {
-                    selectedBitmap = MediaStore.Images.Media.getBitmap(
-                            requireActivity().getContentResolver(), data.getData());
-                    imageViewFood.setImageBitmap(selectedBitmap);
+                    if (getActivity() != null && imageViewFood != null) {
+                        selectedBitmap = MediaStore.Images.Media.getBitmap(
+                                getActivity().getContentResolver(), data.getData());
+                        imageViewFood.setImageBitmap(selectedBitmap);
+                    }
                 } catch (Exception e) {
-                    Toast.makeText(getActivity(), "Error loading image", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                    if (getActivity() != null) {
+                        Toast.makeText(getActivity(), "Error loading image", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }
@@ -174,6 +184,51 @@ public class FragmentUpload extends Fragment {
             return;
         }
 
-        Toast.makeText(getActivity(), "Post creation disabled", Toast.LENGTH_SHORT).show();
+        // Get current user ID
+        MainActivity mainActivity = (MainActivity) getActivity();
+        if (mainActivity == null) {
+            Toast.makeText(getActivity(), "Error: Unable to get user information", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int userId = mainActivity.getCurrentUserId();
+        if (userId == -1) {
+            Toast.makeText(getActivity(), "Error: User not logged in", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Save post to database
+        TasteBuddiesDatabaseManager dbManager = TasteBuddiesDatabaseManager.getInstance(getActivity());
+        Double lat = (latitude != 0) ? latitude : null;
+        Double lon = (longitude != 0) ? longitude : null;
+        
+        long postId = dbManager.insertPost(userId, foodName, review.isEmpty() ? null : review, 
+                rating, selectedBitmap, restaurant.isEmpty() ? null : restaurant, 
+                location.isEmpty() ? null : location, lat, lon);
+
+        if (postId > 0) {
+            Toast.makeText(getActivity(), "Post created successfully!", Toast.LENGTH_SHORT).show();
+            
+            // Clear form
+            editTextFoodName.setText("");
+            editTextRestaurant.setText("");
+            editTextLocation.setText("");
+            editTextReview.setText("");
+            ratingBar.setRating(0);
+            imageViewFood.setImageResource(android.R.drawable.ic_menu_gallery);
+            selectedBitmap = null;
+            
+            // Refresh home fragment to show the new post
+            // Use post to ensure UI thread handles the navigation
+            if (getView() != null) {
+                getView().post(() -> {
+                    mainActivity.refreshHomeFragment();
+                });
+            } else {
+                mainActivity.refreshHomeFragment();
+            }
+        } else {
+            Toast.makeText(getActivity(), "Failed to create post", Toast.LENGTH_SHORT).show();
+        }
     }
 }
