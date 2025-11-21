@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- New color palette -->
+    <color name="tea_green">#FFC8D69B</color>
+    <color name="vanilla">#FFF6E6A5</color>
+    <color name="celtic_blue">#FF3971B8</color>
+    <color name="ivory">#FFFBFCEE</color>
+    <color name="drab_dark_brown">#FF343B1B</color>
+    
+    <!-- Mapped design colors using new palette -->
+    <color name="background_cream">#FFFBFCEE</color>
+    <color name="yellow">#FFF6E6A5</color>
+    <color name="blue">#FF3971B8</color>
+    <color name="pastel_pink">#FFC8D69B</color>
+    <color name="text_dark">#FF343B1B</color>
+    <color name="text_gray">#80343B1B</color>
+</resources>
